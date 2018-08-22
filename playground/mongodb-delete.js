@@ -10,9 +10,18 @@ MongoClient.connect(connectionString, (err, client) => {
 
   const db = client.db(dbName);
 
-  db.collection('Todos').find({text: 'eat lunch'}).toArray().then((docs) => {
-    console.log(JSON.stringify(docs, undefined, 2));
-  }, (err) => {
-    assert.equal(null, err);
-  });
+  // db.collection('Todos').deleteOne({text: 'eat lunch'})
+  // .then((result) => {
+  //   assert(1, result.n);
+  //   console.log(result);
+  // });
+
+db.collection('Todos').findOneAndDelete({completed: false})
+.then((result) => {
+  console.log(result);
+}, (err) => {
+  assert.equal(null, err);
+});
+
+  // client.close();
 });

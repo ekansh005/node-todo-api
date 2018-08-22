@@ -11,8 +11,8 @@ MongoClient.connect(connectionString, (err, client) => {
   const db = client.db(dbName);
 
   db.collection('Todos').insertOne({
-    text: 'my second task',
-    completed: true,
+    text: 'eat lunch',
+    completed: false,
   }, (err, result) => {
     assert.equal(null, err);
     console.log('1 record inserted');
