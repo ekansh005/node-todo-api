@@ -1,12 +1,15 @@
 const expect = require('expect');
 const request = require('supertest');
+const {ObjectID} = require('mongodb');
 
 const {app} = require('./../server');
 const {Todo} = require('./../model/Todo');
 
 const aSeed = [{
+  _id: new ObjectID(),
   text: '1st todo',
 }, {
+  _id: new ObjectID(),
   text: '2nd todo',
 }];
 beforeEach((done) => {
@@ -61,11 +64,38 @@ describe('GET /todos', () => {
   it('should list all todos', (done) => {
     request(app)
     .get('/todos')
-    .send()
     .expect(200)
     .expect((res) => {
       expect(res.body.todos.length).toBe(2);
     })
+    .end(done);
+  });
+});
+
+describe('GET /todos/:id', () => {
+  it('should fetch one todo by id', (done) => {
+    const id = aSeed[0]._id.toHexString();
+    request(app)
+    .get(`/todos/${id}`)
+    .expect(200)
+    .expect((res) => {
+      expect(res.body._id).toBe(id);
+    })
+    .end(done);
+  });
+
+  it('should return 404 if object id is not found', (done) => {
+    const id = new ObjectID().toHexString();
+    request(app)
+    .get(`/todos/${id}`)
+    .expect(404)
+    .end(done);
+  });
+
+  it('should return 404 when passed non id', (done) => {
+    request(app)
+    .get('/todos/1234')
+    .expect(404)
     .end(done);
   });
 });

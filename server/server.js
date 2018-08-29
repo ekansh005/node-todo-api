@@ -32,7 +32,7 @@ app.get('/todos', (req, res) => {
 
 app.get('/todos/:id', (req, res) => {
   if (!ObjectID.isValid(req.params.id)) {
-    res.status(404).send('Invalid ID');
+    return res.status(404).send('Invalid ID');
   }
   Todo.findById(req.params.id).then((todo) => {
     todo ? res.send(todo) : res.status(404).send('Not Found');
