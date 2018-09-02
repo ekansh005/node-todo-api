@@ -11,6 +11,8 @@ const aSeed = [{
 }, {
   _id: new ObjectID(),
   text: '2nd todo',
+  completed: true,
+  completedAt: 123,
 }];
 beforeEach((done) => {
   Todo.remove({})
@@ -132,6 +134,41 @@ describe('DELETE /todos/:id', () => {
     request(app)
     .delete(`/todos/1234`)
     .expect(404)
+    .end(done);
+  });
+});
+
+describe('PATCH /todos/:id', () => {
+  it('should update todo', (done) => {
+    const id = aSeed[0]._id.toHexString();
+    request(app)
+    .patch(`/todos/${id}`)
+    .send({
+      text: 'updated',
+      completed: true,
+    })
+    .expect(200)
+    .expect((res) => {
+      expect(res.body.text).toBe('updated');
+      expect(res.body.completed).toBe(true);
+      expect(typeof res.body.completedAt).toBe('number');
+    })
+    .end(done);
+  });
+
+  it('should clear completedAt when todo is not completed', (done) => {
+    const id = aSeed[1]._id.toHexString();
+    request(app)
+    .patch(`/todos/${id}`)
+    .send({
+      text: 'updated second',
+    })
+    .expect(200)
+    .expect((res) => {
+      expect(res.body.text).toBe('updated second');
+      expect(res.body.completed).toBe(false);
+      expect(res.body.completedAt).toBeNull();
+    })
     .end(done);
   });
 });
