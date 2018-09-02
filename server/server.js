@@ -6,7 +6,7 @@ const {ObjectID} = require('mongodb');
 
 const {mongoose} = require('./db/mongoose');
 const {Todo} = require('./model/Todo');
-// const {User} = require('./model/User');
+const {User} = require('./model/User');
 
 const app = express();
 const port = process.env.PORT;
@@ -69,6 +69,15 @@ app.patch('/todos/:id', (req, res) => {
   Todo.findByIdAndUpdate(req.params.id, {$set: body}, {new: true})
   .then((todo) => {
     todo ? res.send(todo) : res.status(404).send('not found');
+  }).catch((e) => res.status(400).send(e));
+});
+
+app.post('/users', (req, res) => {
+  let body = _.pick(req.body, ['email', 'password']);
+  let newUser = new User(body);
+
+  newUser.save().then((user) => {
+    res.send(user);
   }).catch((e) => res.status(400).send(e));
 });
 
