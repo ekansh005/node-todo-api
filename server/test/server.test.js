@@ -15,11 +15,9 @@ const aSeed = [{
   completedAt: 123,
 }];
 beforeEach((done) => {
-  Todo.remove({})
-  .then(() => {
+  Todo.remove({}).then(() => {
     return Todo.insertMany(aSeed);
-  })
-  .then(() => done());
+  }).then(() => done());
 });
 
 describe('POST /todos', () => {
