@@ -1,24 +1,15 @@
 const expect = require('expect');
 const request = require('supertest');
 const {ObjectID} = require('mongodb');
+const _ = require('lodash');
 
 const {app} = require('./../server');
 const {Todo} = require('./../model/Todo');
+const {User} = require('./../model/User');
+const {aTodos, populateTodos, aUsers, populateUsers} = require('./seed/seed');
 
-const aSeed = [{
-  _id: new ObjectID(),
-  text: '1st todo',
-}, {
-  _id: new ObjectID(),
-  text: '2nd todo',
-  completed: true,
-  completedAt: 123,
-}];
-beforeEach((done) => {
-  Todo.remove({}).then(() => {
-    return Todo.insertMany(aSeed);
-  }).then(() => done());
-});
+beforeEach(populateUsers);
+beforeEach(populateTodos);
 
 describe('POST /todos', () => {
   it('should create a new todo', (done) => {
@@ -74,7 +65,7 @@ describe('GET /todos', () => {
 
 describe('GET /todos/:id', () => {
   it('should fetch one todo by id', (done) => {
-    const id = aSeed[0]._id.toHexString();
+    const id = aTodos[0]._id.toHexString();
     request(app)
     .get(`/todos/${id}`)
     .expect(200)
@@ -102,7 +93,7 @@ describe('GET /todos/:id', () => {
 
 describe('DELETE /todos/:id', () => {
   it('should delete a valid todo', (done) => {
-    const id = aSeed[0]._id.toHexString();
+    const id = aTodos[0]._id.toHexString();
     request(app)
     .delete(`/todos/${id}`)
     .expect(200)
@@ -138,7 +129,7 @@ describe('DELETE /todos/:id', () => {
 
 describe('PATCH /todos/:id', () => {
   it('should update todo', (done) => {
-    const id = aSeed[0]._id.toHexString();
+    const id = aTodos[0]._id.toHexString();
     request(app)
     .patch(`/todos/${id}`)
     .send({
@@ -155,7 +146,7 @@ describe('PATCH /todos/:id', () => {
   });
 
   it('should clear completedAt when todo is not completed', (done) => {
-    const id = aSeed[1]._id.toHexString();
+    const id = aTodos[1]._id.toHexString();
     request(app)
     .patch(`/todos/${id}`)
     .send({
@@ -166,6 +157,93 @@ describe('PATCH /todos/:id', () => {
       expect(res.body.text).toBe('updated second');
       expect(res.body.completed).toBe(false);
       expect(res.body.completedAt).toBeNull();
+    })
+    .end(done);
+  });
+});
+
+describe('GET /users/me', () => {
+  it('should return user details if authenticated', (done) => {
+    request(app)
+    .get('/users/me')
+    .set('x-auth', aUsers[0].tokens[0].token)
+    .expect(200)
+    .expect((res) => {
+      expect(res.body._id).toBe(aUsers[0]._id.toHexString());
+      expect(res.body.email).toBe(aUsers[0].email);
+    })
+    .end(done);
+  });
+
+  it('should return 401 if invalid token', (done) => {
+    request(app)
+    .get('/users/me')
+    .set('x-auth', 'asdkljfhsdjfhl')
+    .expect(401)
+    .expect((res) => {
+      expect(res.body).toEqual({});
+    })
+    .end(done);
+  });
+
+  it('should return 401 if NO token', (done) => {
+    request(app)
+    .get('/users/me')
+    .expect(401)
+    .expect((res) => {
+      expect(res.body).toEqual({});
+    })
+    .end(done);
+  });
+});
+
+describe('POST /users', () => {
+  it('should create a user', (done) => {
+    const oUser = {
+      email: 'test@fromTest.com',
+      password: 'somepassword',
+    };
+    request(app)
+    .post('/users')
+    .send(oUser)
+    .expect(200)
+    .expect((res) => {
+      expect(res.header['x-auth']).toBeTruthy();
+
+      User.findById(new ObjectID(res.body._id)).then((user) => {
+        expect(user).toBeTruthy();
+        expect(user.email).toBe(oUser.email);
+        expect(user.password).not.toBe(oUser.password);
+      });
+    })
+    .end(done);
+  });
+
+  it('should return validation error if request is Invalid', (done) => {
+    const oUser = {
+      email: 'asdf',
+      password: 'asdf',
+    };
+    request(app)
+    .post('/users')
+    .send(oUser)
+    .expect(400)
+    .expect((res) => {
+      expect(res.body).toBeTruthy();
+      expect(res.body.errors).toBeTruthy();
+    })
+    .end(done);
+  });
+
+  it('should not create user if email is already in use', (done) => {
+    const oUser = _.pick(aUsers[0], ['email', 'password']);
+    request(app)
+    .post('/users')
+    .send(oUser)
+    .expect(400)
+    .expect((res) => {
+      expect(res.body).toBeTruthy();
+      expect(res.body.errmsg).toBeTruthy();
     })
     .end(done);
   });
