@@ -248,3 +248,43 @@ describe('POST /users', () => {
     .end(done);
   });
 });
+
+describe('POST /users/login', () => {
+  it('should provide x-auth token for valid credentials', (done) => {
+    const oUser = _.pick(aUsers[1], ['email', 'password']);
+    request(app)
+    .post('/users/login')
+    .send(oUser)
+    .expect(200)
+    .expect((res) => {
+      expect(res.header['x-auth']).toBeTruthy();
+    })
+    .end((err, res) => {
+      if (err) {
+        return done(err);
+      }
+      User.findById(aUsers[1]._id).then((oUser) => {
+        expect(oUser.tokens[0]).toMatchObject({
+          access: 'auth',
+          token: res.header['x-auth'],
+        });
+        done();
+      }).catch((e) => done(e));
+    });
+  });
+
+  it('should return 400 for invalid credentials', (done) => {
+    request(app)
+    .post('/users/login')
+    .send({email: 'users2@test.com', password: 'someRandonPassword'})
+    .expect(400)
+    .expect((res) => {
+      expect(res.header['x-auth']).toBeFalsy();
+
+      User.findById(aUsers[1]._id).then((oUser) => {
+        expect(oUser.tokens.length).toBe(0);
+      }).catch((e) => done(e));
+    })
+    .end(done);
+  });
+});
