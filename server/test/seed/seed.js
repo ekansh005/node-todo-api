@@ -17,7 +17,29 @@ const aUsers = [{
   _id: aUserIds[1],
   email: 'user2@test.com',
   password: 'userTwoPass',
+  tokens: [{
+    access: 'auth',
+    token: jwt.sign({_id: aUserIds[1], access: 'auth'}, 'secret').toString(),
+  }],
 }];
+
+const aTodos = [{
+  _id: new ObjectID(),
+  text: '1st todo',
+  _creator: aUserIds[0],
+}, {
+  _id: new ObjectID(),
+  text: '2nd todo',
+  completed: true,
+  completedAt: 123,
+  _creator: aUserIds[1],
+}];
+
+const populateTodos = (done) => {
+  Todo.remove({}).then(() => {
+    return Todo.insertMany(aTodos);
+  }).then(() => done());
+};
 
 const populateUsers = (done) => {
   User.remove({}).then(() => {
@@ -26,22 +48,6 @@ const populateUsers = (done) => {
       aPromises.push(new User(aUsers[i]).save());
     }
     return Promise.all(aPromises);
-  }).then(() => done());
-};
-
-const aTodos = [{
-  _id: new ObjectID(),
-  text: '1st todo',
-}, {
-  _id: new ObjectID(),
-  text: '2nd todo',
-  completed: true,
-  completedAt: 123,
-}];
-
-const populateTodos = (done) => {
-  Todo.remove({}).then(() => {
-    return Todo.insertMany(aTodos);
   }).then(() => done());
 };
 
