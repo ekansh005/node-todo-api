@@ -4,7 +4,7 @@ const _ = require('lodash');
 const bodyParser = require('body-parser');
 const {ObjectID} = require('mongodb');
 
-const {mongoose} = require('./db/mongoose');
+const {mongoose} = require('./db/mongoose'); // eslint-disable-line no-unused-vars
 const {Todo} = require('./model/Todo');
 const {User} = require('./model/User');
 const {authenticate} = require('./middleware/authenticate');
